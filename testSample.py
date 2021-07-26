@@ -24,7 +24,8 @@ Parse arguments.
 '''
 def parseArgs():
     parser = argparse.ArgumentParser(description='Using three classes of drugs, test different sigma values for RBF kernel transformation on semantic distances for best clustering.')
-    parser.add_argument('-i', '--input', help='input drug lists', nargs='*', action="store", dest="input", required=True)
+    parser.add_argument('-i', '--input', help='input drug lists', nargs='*', action='store', dest='input', required=True)
+    parser.add_argument('-m', '--matrix', help='matrix of distances', type=str, required=True)
     args = parser.parse_args()
     return args
 
@@ -83,27 +84,34 @@ if __name__ == '__main__':
 
 
     # extract rows from distance table
-    print('Loading in distance data...')
-    all_distances = pd.read_csv('~/Harvard/sms/data/all_drug_distances_melted.tsv', delimiter='\t')
-    all_distances = all_distances.drop('Log10_Distance', axis=1) # drop unnecessary column
+    print('Loading in distance matrix...')
+    all_distances = pd.read_csv(args.matrix, delimiter='\t') # load matrix
+    distances = (all_distances.rename(columns={"Drug": "Drug1"})
+        .melt("Drug1", var_name="Drug2", value_name="Distance")
+        .sort_values(by="Drug1")
+    ) # melt data
 
-    distances = pd.DataFrame(columns = list(all_distances.columns))
+    ## OLD WAY
+    # all_distances = pd.read_csv('~/Harvard/sms/data/all_drug_distances_melted.tsv', delimiter='\t')
+    # all_distances = all_distances.drop('Log10_Distance', axis=1) # drop unnecessary column
 
-    print('Extracting relevant rows...')
-    for c,drugs in classes.items():
-        rows1 = all_distances['Drug1'].isin(drugs)
-        rows2 = all_distances['Drug2'].isin(drugs)
+    # distances = pd.DataFrame(columns = list(all_distances_melted.columns))
 
-        distances = distances.append(rows1)
-        distances = distances.append(rows2)
+    # print('Extracting relevant rows...')
+    # for c,drugs in classes.items():
+    #     rows1 = all_distances_melted['Drug1'].isin(drugs)
+    #     rows2 = all_distances_melted['Drug2'].isin(drugs)
+
+    #     distances = distances.append(rows1)
+    #     distances = distances.append(rows2)
 
 
     # calculate RBF kernel using different sigma values
     print('Running sigma tests...')
-    sigmas = [5,10] # [2,4,6,8,10,15,20]
+    sigmas = [2,4,6,8,10,15,20]
     for s in sigmas:
         print(f'Calculating RBF kernel (sigma={s})...')
-        distances[str(s)] = distances.apply(lambda row : rbfKernel(row['Distance']), axis=1)
+        distances[str(s)] = distances.apply(lambda row : rbfKernel(row['Distance'], s), axis=1)
         
         # clustermap
         print(f'Clustering and plotting (sigma={s})...')
