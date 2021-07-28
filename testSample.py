@@ -9,7 +9,8 @@ Process:
 
 '''
 
-
+import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 from numpy.core.arrayprint import printoptions
 import pandas as pd
 import argparse
@@ -24,7 +25,7 @@ Parse arguments.
 '''
 def parseArgs():
     parser = argparse.ArgumentParser(description='Using three classes of drugs, test different sigma values for RBF kernel transformation on semantic distances for best clustering.')
-    parser.add_argument('-i', '--input', help='input drug lists', nargs='*', action='store', dest='input', required=True)
+    parser.add_argument('-i', '--input', help='input drug lists', nargs='*', action='store', dest='input', required=False)
     parser.add_argument('-m', '--matrix', help='matrix of distances', type=str, required=True)
     args = parser.parse_args()
     return args
@@ -75,46 +76,49 @@ if __name__ == '__main__':
 
     args = parseArgs() # parse arguments
 
-    classes = {} # dict where key = drug class and value = list of drugs
+    # classes = {} # dict where key = drug class and value = list of drugs
 
     # read input files
-    print('Reading drug lists...')
-    for file in args.input:
-        classes[getDataName(file)] = readFile(file)
-
+    # print('Reading drug lists...')
+    # for file in args.input:
+    #     classes[getDataName(file)] = readFile(file)
 
     # extract rows from distance table
     print('Loading in distance matrix...')
     all_distances = pd.read_csv(args.matrix, delimiter='\t') # load matrix
+
+    classes = all_distances.pop('Class')
+
     distances = (all_distances.rename(columns={"Drug": "Drug1"})
         .melt("Drug1", var_name="Drug2", value_name="Distance")
         .sort_values(by="Drug1")
     ) # melt data
 
-    ## OLD WAY
-    # all_distances = pd.read_csv('~/Harvard/sms/data/all_drug_distances_melted.tsv', delimiter='\t')
-    # all_distances = all_distances.drop('Log10_Distance', axis=1) # drop unnecessary column
-
-    # distances = pd.DataFrame(columns = list(all_distances_melted.columns))
-
-    # print('Extracting relevant rows...')
-    # for c,drugs in classes.items():
-    #     rows1 = all_distances_melted['Drug1'].isin(drugs)
-    #     rows2 = all_distances_melted['Drug2'].isin(drugs)
-
-    #     distances = distances.append(rows1)
-    #     distances = distances.append(rows2)
-
-
     # calculate RBF kernel using different sigma values
     print('Running sigma tests...')
-    sigmas = [2,4,6,8,10,15,20]
+    sigmas = [20] #[2,4,6,8,10,13,14,15,16,17,20,25,35]
     for s in sigmas:
         print(f'Calculating RBF kernel (sigma={s})...')
-        distances[str(s)] = distances.apply(lambda row : rbfKernel(row['Distance'], s), axis=1)
+        distances[s] = distances.apply(lambda row : rbfKernel(row['Distance'], s), axis=1)
+        d = list(distances[s])
+        plt.hist(d, bins=100)
+        plt.show()
         
         # clustermap
-        print(f'Clustering and plotting (sigma={s})...')
-        distances_s = distances.pivot('Drug1', 'Drug2', str(s)) # pivot
-        g = sns.clustermap(distances_s, xticklabels=False, yticklabels=False, linewidths=0.0, cmap='viridis') # cluster and plot
-        g.savefig(f'clustermap_rbf_kernel_{s}.png')
+        # print(f'Clustering and plotting (sigma={s})...')
+
+        # distances_s = distances.pivot('Drug1', 'Drug2', s) # pivot
+
+        # do some stuff to color classes
+        # lut = dict(zip(classes.unique(), "rbg"))
+        # row_colors = classes.map(lut)
+        # row_colors.index = distances_s.index
+        # handles = [Patch(facecolor=lut[name]) for name in lut]
+        
+        # sns.set(font_scale=0.6)
+        # g = sns.clustermap(distances_s, linewidths=0.0, figsize=(20,20), cmap='viridis', row_colors=row_colors, col_colors=row_colors) # cluster and plot
+
+        # plt.legend(handles, lut, title='Classes',
+        #    bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper right')
+
+        # g.savefig(f'clustermap_rbf_kernel_{s}-clustered.png')
