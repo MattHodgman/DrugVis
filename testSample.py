@@ -100,25 +100,22 @@ if __name__ == '__main__':
     for s in sigmas:
         print(f'Calculating RBF kernel (sigma={s})...')
         distances[s] = distances.apply(lambda row : rbfKernel(row['Distance'], s), axis=1)
-        d = list(distances[s])
-        plt.hist(d, bins=100)
-        plt.show()
         
         # clustermap
-        # print(f'Clustering and plotting (sigma={s})...')
+        print(f'Clustering and plotting (sigma={s})...')
 
-        # distances_s = distances.pivot('Drug1', 'Drug2', s) # pivot
+        distances_s = distances.pivot('Drug1', 'Drug2', s) # pivot
 
         # do some stuff to color classes
-        # lut = dict(zip(classes.unique(), "rbg"))
-        # row_colors = classes.map(lut)
-        # row_colors.index = distances_s.index
-        # handles = [Patch(facecolor=lut[name]) for name in lut]
+        lut = dict(zip(classes.unique(), "rbg"))
+        row_colors = classes.map(lut)
+        row_colors.index = distances_s.index
+        handles = [Patch(facecolor=lut[name]) for name in lut]
         
-        # sns.set(font_scale=0.6)
-        # g = sns.clustermap(distances_s, linewidths=0.0, figsize=(20,20), cmap='viridis', row_colors=row_colors, col_colors=row_colors) # cluster and plot
+        sns.set(font_scale=0.6)
+        g = sns.clustermap(distances_s, linewidths=0.0, figsize=(20,20), cmap='viridis', row_colors=row_colors, col_colors=row_colors) # cluster and plot
 
-        # plt.legend(handles, lut, title='Classes',
-        #    bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper right')
+        plt.legend(handles, lut, title='Classes',
+           bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper right')
 
-        # g.savefig(f'clustermap_rbf_kernel_{s}-clustered.png')
+        g.savefig(f'clustermap_rbf_kernel_{s}-clustered.png')
