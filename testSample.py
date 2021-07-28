@@ -88,6 +88,8 @@ if __name__ == '__main__':
     all_distances = pd.read_csv(args.matrix, delimiter='\t') # load matrix
 
     classes = all_distances.pop('Class')
+    consensus_clusters = pd.read_csv('../data/3_classes_drug_distances_RBF_kernel_sigma_20-consensus.tsv', delimiter='\t', index_col='Drug')
+
 
     distances = (all_distances.rename(columns={"Drug": "Drug1"})
         .melt("Drug1", var_name="Drug2", value_name="Distance")
@@ -100,6 +102,8 @@ if __name__ == '__main__':
     for s in sigmas:
         print(f'Calculating RBF kernel (sigma={s})...')
         distances[s] = distances.apply(lambda row : rbfKernel(row['Distance'], s), axis=1)
+
+        # distances.to_csv('3_classes_drug_distances_RBF_kernel_sigma_20.tsv', index=False, sep='\t')
         
         # clustermap
         print(f'Clustering and plotting (sigma={s})...')
@@ -107,15 +111,25 @@ if __name__ == '__main__':
         distances_s = distances.pivot('Drug1', 'Drug2', s) # pivot
 
         # do some stuff to color classes
-        lut = dict(zip(classes.unique(), "rbg"))
+        lut = dict(zip(classes.unique(), ['darkgrey','grey','tan']))
         row_colors = classes.map(lut)
         row_colors.index = distances_s.index
         handles = [Patch(facecolor=lut[name]) for name in lut]
+
+        lut2 = {0:'lightgrey',1:'red',2:'orange',3:'green',4:'blue',5:'purple'}
+        row_colors2 = consensus_clusters['Cluster'].map(lut2)
+        row_colors2.index = distances_s.index
+        handles2 = [Patch(facecolor=lut2[name]) for name in lut2]
         
         sns.set(font_scale=0.6)
-        g = sns.clustermap(distances_s, linewidths=0.0, figsize=(20,20), cmap='viridis', row_colors=row_colors, col_colors=row_colors) # cluster and plot
+        g = sns.clustermap(distances_s, linewidths=0.0, figsize=(20,20), cmap='viridis', row_colors=[row_colors,row_colors2], col_colors=[row_colors,row_colors2]) # cluster and plot
 
-        plt.legend(handles, lut, title='Classes',
-           bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper right')
+        legend1 = plt.legend(handles, lut, title='ATC Classes level 2',
+           bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc=1)
+        legend2 = plt.legend(handles2, lut2, title='Consensus Clusters',
+           bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc=2)
 
-        g.savefig(f'clustermap_rbf_kernel_{s}-clustered.png')
+        plt.gca().add_artist(legend1)
+        plt.gca().add_artist(legend2)
+
+        g.savefig(f'clustermap_rbf_kernel_{s}-clustered-consensus.png')
