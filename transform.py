@@ -1,5 +1,8 @@
 import pandas as pd
 from math import exp
+import sys
+
+# parameters: input melted file name, sigma, output melted transformed file name
 
 
 '''
@@ -8,7 +11,7 @@ RBF kernel transformation.
 Set sigma as appropriate.
 '''
 def rbfKernel(d):
-    sigma = 6 # change this as needed
+    sigma = sys.args[2] # change this as needed
 
     try:
         k = exp(-d / (2 * sigma^2))
@@ -16,8 +19,6 @@ def rbfKernel(d):
         print(d)
 
     return k
-
-    
 
 
 '''
@@ -27,7 +28,7 @@ if __name__ == '__main__':
 
     # get data
     print('getting data')
-    distances = pd.read_csv('../data/all_drug_distances_melted.tsv', delimiter='\t') # load in data
+    distances = pd.read_csv(sys.args[1], delimiter='\t') # load in data
     distances = distances.drop('Log10_Distance', axis=1) # drop log10 distance
 
     print('applying transformation')
@@ -36,4 +37,4 @@ if __name__ == '__main__':
 
     print('writing results')
     # write to file
-    distances.to_csv('all_drug_distances_melted.tsv', sep='\t')
+    distances.to_csv(sys.args[3], sep='\t')
