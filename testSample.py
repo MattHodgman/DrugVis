@@ -112,6 +112,7 @@ def histogram(s):
     similarities = distances[s].values()
     plt.hist(similarities)
     plt.title(s)
+    plt.savefig(f'similarities_histo_{s}.png')
 
 
 '''
@@ -129,13 +130,16 @@ if __name__ == '__main__':
     #     classes[getDataName(file)] = readFile(file)
 
     # extract rows from distance table
-    print('Loading in distance matrix...')
-    all_distances = pd.read_csv(args.matrix, delimiter='\t') # load matrix
+    # print('Loading in distance matrix...')
+    # all_distances = pd.read_csv(args.matrix, delimiter='\t') # load matrix
 
-    distances = (all_distances.rename(columns={"Drug": "Drug1"})
-        .melt("Drug1", var_name="Drug2", value_name="Distance")
-        .sort_values(by="Drug1")
-    ) # melt data
+    # distances = (all_distances.rename(columns={"Drug": "Drug1"})
+    #     .melt("Drug1", var_name="Drug2", value_name="Distance")
+    #     .sort_values(by="Drug1")
+    # ) # melt data
+
+    # load in melted distances
+    distances = pd.read_csv(args.matrix, delimiter='\t') # load matrix
 
     # calculate RBF kernel using different sigma values
     print('Running sigma tests...')
