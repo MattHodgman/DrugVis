@@ -132,3 +132,4 @@ dmypy.json
 *.tsv
 *.csv
 *.png
+.DS_Store
