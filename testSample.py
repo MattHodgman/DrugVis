@@ -109,8 +109,8 @@ Plot the similarity scores on a histogram.
 '''
 def histogram(s):
     print('plotting similarities...')
-    similarities = distances[s].values()
-    plt.hist(similarities)
+    similarities = distances[s].tolist()
+    plt.hist(similarities, bins=100)
     plt.title(s)
     plt.savefig(f'similarities_histo_{s}.png')
 
@@ -139,6 +139,7 @@ if __name__ == '__main__':
     # ) # melt data
 
     # load in melted distances
+    print('loading data...')
     distances = pd.read_csv(args.matrix, delimiter='\t') # load matrix
 
     # calculate RBF kernel using different sigma values
